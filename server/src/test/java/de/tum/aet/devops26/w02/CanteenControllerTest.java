@@ -54,12 +54,41 @@ public class CanteenControllerTest {
 
     @Test
     public void testGetTodayMeals_ReturnsNoContent_WhenNoMealsAvailable() throws Exception {
-         // TODO implement this test
+        // Mock the API response with empty days list
+        when(restTemplate.getForObject(anyString(), eq(Week.class)))
+            .thenReturn(new Week(15, 2024, List.of()));
+        
+        // Act & Assert - controller returns 200 OK with empty list
+        List<Dish> result = getList("/{canteenName}/today", HttpStatus.OK, Dish.class, "mensa-garching");
+        assertThat(result).isEmpty();
     }
 
     @Test
     public void testGetTodayMeals_ReturnsOkWithMeals() throws Exception {
-         // TODO implement this second test
+        // Arrange
+        int year = 2025;
+        LocalDate today = LocalDate.of(year, 5, 8);
+        int weekNumber = today.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
+        String weekStr = String.format("%02d", weekNumber);
+        
+        final var expectedWeek = createTestData(today, weekNumber, year);
+        
+        String canteenName = "mensa-garching";
+        String expectedUrl = "https://tum-dev.github.io/eat-api/" + canteenName + "/" + year + "/" + weekStr + ".json";
+        
+        when(restTemplate.getForObject(eq(expectedUrl), eq(Week.class))).thenReturn(expectedWeek);
+        
+        // Act
+        List<Dish> actualTodayDishes = getList("/{canteenName}/today", HttpStatus.OK, Dish.class, canteenName);
+        
+        // Assert
+        assertThat(actualTodayDishes).hasSize(2);
+        var actualDish1 = actualTodayDishes.getFirst();
+        assertThat(actualDish1.name()).isEqualTo("Vegetarian Pasta");
+        assertThat(actualDish1.dish_type()).isEqualTo("Main Dish");
+        var actualDish2 = actualTodayDishes.get(1);
+        assertThat(actualDish2.name()).isEqualTo("Salad");
+        assertThat(actualDish2.dish_type()).isEqualTo("Side Dish");
     }
 
     private <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType, Object... uriVariables) throws Exception {
