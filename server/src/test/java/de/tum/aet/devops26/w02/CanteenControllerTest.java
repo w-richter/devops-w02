@@ -58,9 +58,8 @@ public class CanteenControllerTest {
         when(restTemplate.getForObject(anyString(), eq(Week.class)))
             .thenReturn(new Week(15, 2024, List.of()));
         
-        // Act & Assert - controller returns 200 OK with empty list
-        List<Dish> result = getList("/{canteenName}/today", HttpStatus.OK, Dish.class, "mensa-garching");
-        assertThat(result).isEmpty();
+        // Act & Assert
+        List<Dish> result = getList("/{canteenName}/today", HttpStatus.NO_CONTENT, Dish.class, "mensa-garching");
     }
 
     @Test
